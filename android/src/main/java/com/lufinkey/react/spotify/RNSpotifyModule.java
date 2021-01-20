@@ -498,8 +498,6 @@ public class RNSpotifyModule extends ReactContextBaseJavaModule implements Playe
 		}
 
 		if(loggedOut) {
-			Spotify.destroyPlayer(this);
-			player = null;
 			completion.resolve(null);
 		}
 		else if(!loggingOutPlayer) {
@@ -727,7 +725,7 @@ public class RNSpotifyModule extends ReactContextBaseJavaModule implements Playe
 			promise.resolve(null);
 			return;
 		}
-		// log out and destroy the player
+
 		logoutPlayer(new Completion<Void>() {
 			@Override
 			public void onReject(SpotifyError error) {
@@ -1372,10 +1370,7 @@ public class RNSpotifyModule extends ReactContextBaseJavaModule implements Playe
 					if(error != null || !renewed.booleanValue()) {
 						// we couldn't renew the session
 						if(isLoggedIn()) {
-							// clear session and destroy player
 							clearSession();
-							Spotify.destroyPlayer(reference);
-							player = null;
 							// send logout event
 							sendEvent("logout");
 						}
@@ -1387,10 +1382,7 @@ public class RNSpotifyModule extends ReactContextBaseJavaModule implements Playe
 			}, true);
 		}
 		else {
-			// clear session and destroy player
 			clearSession();
-			Spotify.destroyPlayer(this);
-			player = null;
 
 			// handle logoutPlayer callbacks
 			ArrayList<Completion<Void>> logoutResponses;
@@ -1411,10 +1403,7 @@ public class RNSpotifyModule extends ReactContextBaseJavaModule implements Playe
 	public void onLoginFailed(Error error) {
 		boolean sendLogoutEvent = false;
 		if(isLoggedIn()) {
-			// clear session and destroy player
 			clearSession();
-			Spotify.destroyPlayer(this);
-			player = null;
 			sendLogoutEvent = true;
 		}
 
@@ -1561,5 +1550,14 @@ public class RNSpotifyModule extends ReactContextBaseJavaModule implements Playe
 	@Override
 	public void onEvent(String eventName, Object... args) {
 		//
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		try {
+			Spotify.destroyPlayer(this);
+		} finally {
+			super.finalize();
+		}
 	}
 }
